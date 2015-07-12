@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
+#include "Libraries/Tinyxml2/tinyxml2.h"
 
 /*
  * Класс, управляющий редактированием 
@@ -45,6 +49,9 @@ public:
     // Создание нового NPC.
     NPCHolder *createNPC( unsigned int id=0 );
     
+    // Удаление NPC
+    void removeNPC( unsigned int id=0 );
+
     // Получение количества NPC в файле.
     unsigned int length() const;
     
@@ -58,6 +65,14 @@ public:
     int getNPCIndex( NPCHolder *npc ) const;
 
 private:
+    // Приватные методы для открытия файла
+    std::string openingFile( const std::string &path ) const;
+    std::string decodeFile( const std::string &fileData ) const;
+    bool parseData ( const std::string &data );
+
+    bool parseNode ( tinyxml2::XMLElement *npcElement );
+
+    std::string _currentOpenPath;
     bool _isOpen;
     std::vector < NPCHolder * > _npcs;
 };

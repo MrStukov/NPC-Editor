@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFileDialog>
+#include <QMessageBox>
 #include "npcfileeditorholder.h"
 
 namespace Ui {
@@ -31,6 +33,10 @@ private slots:
 
     void on_addNpc_button_clicked();
 
+    void on_listWidget_activated(const QModelIndex &index);
+
+    void on_delete_button_clicked();
+
 private:
     // Метод обновления listWidet
     void updateListWidget();
@@ -40,6 +46,9 @@ private:
 
     // Метод обновления данных из форм
     void updateData();
+
+    // Метод очистки форм
+    void clearForm();
 
     Ui::MainWindow *_ui;
     NPCFileEditorHolder _npcEditor;

@@ -15,9 +15,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    npcfileeditorholder.cpp
+    npcfileeditorholder.cpp \
+    Libraries/Tinyxml2/tinyxml2.cpp
 
 HEADERS  += mainwindow.h \
-    npcfileeditorholder.h
+    npcfileeditorholder.h \
+    Libraries/Tinyxml2/tinyxml2.h
 
 FORMS    += mainwindow.ui
