@@ -2,6 +2,7 @@
 #define DIALOGEDITOR_H
 
 #include <QDialog>
+#include "npcfileeditorholder.h"
 
 namespace Ui {
 class DialogEditor;
@@ -15,8 +16,21 @@ public:
     explicit DialogEditor(QWidget *parent = 0);
     ~DialogEditor();
 
+    void setNpcEditor( NPCFileEditorHolder *npcEditor );
+    NPCFileEditorHolder *npcEditorHolder() const;
+
+    // Обновление listWidget
+    void updateListWidget();
+private slots:
+    void on_listWidget_activated(const QModelIndex &index);
+
 private:
-    Ui::DialogEditor *ui;
+
+    // Загрузка диалога
+    void loadDialog( unsigned int index );
+
+    Ui::DialogEditor *_ui;
+    NPCFileEditorHolder *_npcEditor;
 };
 
 #endif // DIALOGEDITOR_H

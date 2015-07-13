@@ -54,6 +54,19 @@ void NPCFileEditorHolder::clear()
          iterator++)
         delete (*iterator);
     _npcs.clear();
+
+    for (std::vector < DialogHolder * >::iterator iterator = _dialogues.begin();
+         iterator != _dialogues.end();
+         iterator++)
+        delete (*iterator);
+    _dialogues.clear();
+
+    for (std::vector < DialogNode *>::iterator iterator = _nodesHolder.begin();
+         iterator != _nodesHolder.end();
+         iterator++)
+        delete (*iterator);
+    _nodesHolder.clear();
+
     _isOpen = false;
 }
 
@@ -115,7 +128,7 @@ void NPCFileEditorHolder::removeNPC(unsigned int id)
     _npcs.erase( std::remove( _npcs.begin(), _npcs.end(), npc ) );
 }
 
-unsigned int NPCFileEditorHolder::length() const
+unsigned int NPCFileEditorHolder::npcLength() const
 {
     return _npcs.size();
 }
@@ -158,7 +171,7 @@ bool NPCFileEditorHolder::save(const std::string &path)
     else
         filePointer = fopen( _currentOpenPath.c_str(), "w" );
 
-    // Запись в файл
+    // Запись в файл npc
     tinyxml2::XMLPrinter printer(filePointer);
 
     printer.OpenElement("npcs");
@@ -171,6 +184,67 @@ bool NPCFileEditorHolder::save(const std::string &path)
 
         printer.PushAttribute("id", std::to_string((*iterator)->id).c_str() );
         printer.PushAttribute("name", (*iterator)->name.c_str());
+        printer.PushAttribute("dialog", std::to_string((*iterator)->dialogId).c_str());
+
+        printer.CloseElement(false);
+    }
+
+    printer.CloseElement(false);
+
+    // Запись в файл диалогов
+
+    printer.OpenElement("dialogues");
+
+    for (std::vector < DialogHolder *>::const_iterator iterator = _dialogues.begin();
+         iterator != _dialogues.end();
+         iterator++)
+    {
+        printer.OpenElement("dialogRoot");
+
+        printer.PushAttribute("id", (*iterator)->id);
+        printer.PushAttribute("starts", (*iterator)->root->id);
+        printer.PushAttribute("name", (*iterator)->name.c_str());
+
+        for (std::vector < DialogNode * >::const_iterator dialogIterator = _nodesHolder.begin();
+             dialogIterator != _nodesHolder.end();
+             dialogIterator++)
+            if ((*dialogIterator)->dialogId == (*iterator)->id)
+            {
+                printer.OpenElement("dialogNode");
+                printer.PushAttribute("id", std::to_string((*dialogIterator)->id).c_str());
+
+                // Записываем текст
+                printer.OpenElement("text");
+
+                printer.PushText((*dialogIterator)->text.c_str());
+
+                printer.CloseElement(false);
+
+                // Записываем ответы
+                for (std::vector < DialogAnswer >::const_iterator answerIterator = (*dialogIterator)->answers.begin();
+                     answerIterator != (*dialogIterator)->answers.end();
+                     answerIterator++)
+                {
+                    printer.OpenElement("answer");
+
+                    switch (answerIterator->answerType)
+                    {
+                    case DialogAnswer::Type_Blank:
+                        printer.PushAttribute("type", "blank");
+                        printer.PushAttribute("goto", std::to_string(answerIterator->destinationId).c_str());
+                        break;
+                    case DialogAnswer::Type_Shop:
+                        printer.PushAttribute("type", "shop");
+                        // TODO: Добавить поддержку магазинов
+                        break;
+                    }
+                    printer.PushText(answerIterator->text.c_str());
+
+                    printer.CloseElement(false);
+                }
+
+                printer.CloseElement(false);
+            }
 
         printer.CloseElement(false);
     }
@@ -193,6 +267,23 @@ int NPCFileEditorHolder::getNPCIndex(NPCFileEditorHolder::NPCHolder *npc) const
 
     printf("[NPCFileEditorHolder::getNPCIndex] Error: Can't get index of npc.\n");
     return -1;
+}
+
+unsigned int NPCFileEditorHolder::dialogLength() const
+{
+    return _dialogues.size();
+}
+
+NPCFileEditorHolder::DialogHolder* NPCFileEditorHolder::getDialog(unsigned int index) const
+{
+    if (index >= _dialogues.size())
+    {
+        printf("[NPCFileEditorHolder::getDialog] Error: Can't get %d dialog. Out of size.\n",
+               index);
+        return nullptr;
+    }
+
+    return _dialogues[index];
 }
 
 std::string NPCFileEditorHolder::openingFile(const std::string &path) const
@@ -225,40 +316,164 @@ bool NPCFileEditorHolder::parseData(const std::string &data)
     }
 
     // Получение корневой ноды
-    tinyxml2::XMLElement *rootElement = document.FirstChildElement("npcs");
-    if (!rootElement)
+    tinyxml2::XMLElement *npcRootElement = document.FirstChildElement("npcs");
+    if (!npcRootElement)
     {
-        printf("[NPCFileEditorHolder::parseData] Error: Can't find root element.\n");
+        printf("[NPCFileEditorHolder::parseData] Error: Can't find npc root element.\n");
         return false;
     }
 
-    // Обработка
-    tinyxml2::XMLElement *npcElement = rootElement->FirstChildElement("npc");
+    // Обработка npc
+    tinyxml2::XMLElement *npcElement = npcRootElement->FirstChildElement("npc");
     while (npcElement)
     {
-        if (!parseNode( npcElement ))
-            printf("[NPCFileEditorHolder::parseData] Warning: Can't parse node.\n");
+        if (!parseNPCNode( npcElement ))
+            printf("[NPCFileEditorHolder::parseData] Warning: Can't parse npc node.\n");
+
         npcElement = npcElement->NextSiblingElement("npc");
+    }
+
+    // Получение корневой ноды
+    tinyxml2::XMLElement *dialogRootElement = document.FirstChildElement("dialogues");
+    if (!dialogRootElement)
+    {
+        printf("[NPCFileEditorHolder::parseData] Error: Can't find dialog root element.\n");
+        return false;
+    }
+
+    // Обработка диалогов
+    tinyxml2::XMLElement *dialogElement = dialogRootElement->FirstChildElement("dialogRoot");
+    while (dialogElement)
+    {
+        if (!parseDialogRoot( dialogElement ))
+            printf("[NPCFileEditorHolder::parseData] Warning: Can't parse dialog node.\n");
+
+        dialogElement = dialogElement->NextSiblingElement("dialogRoot");
     }
 
     return true;
 }
 
-bool NPCFileEditorHolder::parseNode(tinyxml2::XMLElement *npcElement)
+bool NPCFileEditorHolder::parseNPCNode(tinyxml2::XMLElement *npcElement)
 {
     const char *id = npcElement->Attribute("id");
     const char *name = npcElement->Attribute("name");
+    const char *dialogId = npcElement->Attribute("dialog");
 
-    if (!id || !name)
+    if (!id || !name || !dialogId)
         return false;
 
-    NPCHolder *npc = new NPCHolder(
-        atoi( id ),
-        std::string( name )
-    );
+    NPCHolder *npc = new NPCHolder();
+
+    npc->id = atoi(id);
+    npc->name = name;
+    npc->dialogId = atoi(dialogId);
 
     _npcs.push_back( npc );
 
     return true;
+}
+
+bool NPCFileEditorHolder::parseDialogRoot(tinyxml2::XMLElement *dialogElement)
+{
+    const char *dialogId = dialogElement->Attribute("id");
+    const char *startId = dialogElement->Attribute("starts");
+
+    if (!dialogId)
+    {
+        printf("[NPCFileEditorHolder::parseDialogNode] Error: Can't find dialog root id.\n");
+        return false;
+    }
+
+    if (!startId)
+    {
+        printf("[NPCFileEditorHolder::parseDialogNode] Error: Can't find start dialog id.\n");
+        return false;
+    }
+
+    DialogHolder *dialog = new DialogHolder( atoi(dialogId) );
+    dialog->name = std::string( dialogElement->Attribute("name") );
+
+
+    // Обработка dialogNode
+    tinyxml2::XMLElement *dialogNodeElement = dialogElement->FirstChildElement("dialogNode");
+    while (dialogNodeElement)
+    {
+        DialogNode *dialogNode = new DialogNode();
+
+        dialogNode->text = parseDialogNodeText( dialogNodeElement );
+        dialogNode->id = atoi( dialogNodeElement->Attribute("id") );
+        dialogNode->dialogId = dialog->id;
+
+        if (dialogNode->id == (unsigned int) atoi(startId))
+            dialog->root = dialogNode;
+
+        parseAnswers( dialogNode, dialogNodeElement );
+
+        _nodesHolder.push_back( dialogNode );
+
+        dialogNodeElement = dialogNodeElement->NextSiblingElement("dialogNode");
+    }
+
+    // Доработка "ответов", так как все ноды получены
+    for (std::vector < DialogNode * >::iterator iterator = _nodesHolder.begin();
+         iterator != _nodesHolder.end();
+         iterator++)
+        if ((*iterator)->dialogId == dialog->id)
+            for (std::vector < DialogAnswer >::iterator answerIterator = (*iterator)->answers.begin();
+                 answerIterator != (*iterator)->answers.end();
+                 answerIterator++)
+                (*answerIterator).destination = findNode((*iterator)->dialogId, (*answerIterator).destinationId);
+
+    _dialogues.push_back( dialog );
+
+    return true;
+}
+
+std::string NPCFileEditorHolder::parseDialogNodeText(tinyxml2::XMLElement *dialogNode)
+{
+    tinyxml2::XMLElement *textElement = dialogNode->FirstChildElement( "text" );
+    if (!textElement)
+        return std::string();
+
+    return std::string(textElement->GetText());
+}
+
+void NPCFileEditorHolder::parseAnswers(NPCFileEditorHolder::DialogNode *dialog, tinyxml2::XMLElement *dialogNode)
+{
+    tinyxml2::XMLElement *answerElement = dialogNode->FirstChildElement("answer");
+    while (answerElement)
+    {
+        DialogAnswer answer;
+
+        answer.text = std::string ( answerElement->GetText() );
+
+        const char *answerType = answerElement->Attribute("type");
+        if (strcmp(answerType, "blank") == 0)
+        {
+            answer.answerType = DialogAnswer::Type_Blank;
+            answer.destinationId = atoi(answerElement->Attribute("goto"));
+        }
+        else if (strcmp(answerType, "shop") == 0)
+        {
+            answer.answerType = DialogAnswer::Type_Shop;
+        }
+
+        dialog->answers.push_back(answer);
+
+        answerElement = answerElement->NextSiblingElement("answer");
+    }
+}
+
+NPCFileEditorHolder::DialogNode *NPCFileEditorHolder::findNode(unsigned int rootId, unsigned int nodeId)
+{
+    for (std::vector < DialogNode * >::iterator iterator = _nodesHolder.begin();
+         iterator != _nodesHolder.end();
+         iterator++)
+        if ((*iterator)->dialogId == rootId &&
+            (*iterator)->id == nodeId)
+            return (*iterator);
+
+    return nullptr;
 }
 

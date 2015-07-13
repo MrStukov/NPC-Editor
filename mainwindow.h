@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include "npcfileeditorholder.h"
+#include "dialogeditor.h"
 
 namespace Ui {
 class MainWindow;
@@ -37,9 +38,14 @@ private slots:
 
     void on_delete_button_clicked();
 
+    void on_actionDialog_manager_triggered();
+
 private:
     // Метод обновления listWidet
     void updateListWidget();
+
+    // Обновление набора диалогов
+    void updateDialogs();
 
     // Метод загрузки данных в формы
     void loadNPCWith( unsigned int index );
@@ -51,6 +57,8 @@ private:
     void clearForm();
 
     Ui::MainWindow *_ui;
+    DialogEditor *_dialogEditor;
+
     NPCFileEditorHolder _npcEditor;
     int _currentNPCIndex;
 };
