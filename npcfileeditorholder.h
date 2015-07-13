@@ -32,6 +32,36 @@ public:
         unsigned int id;
         std::string name;
     };
+
+    /*
+     * Структура, описывающая одну ноду диалога
+     */
+    struct DialogNode
+    {
+        DialogNode( DialogNode *enterParent=nullptr )
+        {
+            parent = enterParent;
+        }
+
+        DialogNode *parent;
+        std::vector < DialogNode * > children;
+    };
+
+    /*
+     * Структура, хранящая все данные о диалоге.
+     */
+    struct DialogHolder
+    {
+        DialogHolder ( unsigned int enterId=0,
+                       DialogNode *enterDialogRoot=nullptr)
+        {
+            id = enterId;
+            root = enterDialogRoot;
+        }
+
+        unsigned int id;
+        DialogNode *root;
+    };
     
     // Конструктор и деструктор
     NPCFileEditorHolder();
