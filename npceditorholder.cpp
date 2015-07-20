@@ -308,6 +308,110 @@ NPCEditorHolder::DialogHolder *NPCEditorHolder::getDialog(unsigned int index) co
     return _dialogues[index];
 }
 
+NPCEditorHolder::DialogHolder *NPCEditorHolder::createDialog(unsigned int id)
+{
+    // Проврка на наличие предоставленного индекса
+    // ( id == 0 -> индекс предоставлен не был )
+    unsigned int resultId = 0;
+    if (id == 0)
+    {
+        // Поиск максимального id
+        unsigned int maxId = 0;
+        for (std::vector < DialogHolder *>::iterator iterator = _dialogues.begin();
+             iterator != _npcs.end();
+             iterator++)
+            if ( (*iterator)->id > maxId )
+                maxId = (*iterator)->id;
+
+        resultId = maxId + 1;
+    }
+    else
+    {
+        // Проверка на существование предоставленного индекса
+        bool found = false;
+        for (std::vector < DialogHolder * >::iterator iterator = _dialogues.begin();
+             iterator != _npcs.end() && !found;
+             iterator++)
+            if ( id == (*iterator)->id )
+                found = true;
+
+        if (found)
+        {
+            printf("[NPCFileEditorHolder::createDialog] Error: Can't create npc with id %d\n", id);
+            return nullptr;
+        }
+
+        resultId = id;
+    }
+
+    DialogHolder *newDialog = new DialogHolder( resultId );
+
+    _dialogues.push_back( newDialog );
+
+    return newDialog;
+}
+
+void NPCEditorHolder::removeDialog(unsigned int id)
+{
+    DialogHolder *dialog = nullptr;
+    for (std::vector < DialogHolder * >::iterator iterator = _dialogues.begin();
+         iterator != _dialogues.end();
+         iterator++)
+        if ( id == (*iterator)->id )
+        {
+            delete (*iterator);
+            dialog = (*iterator);
+        }
+
+    _dialogues.erase( std::remove( _dialogues.begin(), _dialogues.end(), dialog ) );
+}
+
+NPCEditorHolder::DialogNode *NPCEditorHolder::createNode( unsigned int dialogId, unsigned int id)
+{
+    // Проврка на наличие предоставленного индекса
+    // ( id == 0 -> индекс предоставлен не был )
+    unsigned int resultId = 0;
+    if (id == 0)
+    {
+        // Поиск максимального id
+        unsigned int maxId = 0;
+        for (std::vector < DialogNode *>::iterator iterator = _nodesHolder.begin();
+             iterator != _nodesHolder.end();
+             iterator++)
+            if ((*iterator)->dialogId == dialogId)
+                if ( (*iterator)->id > maxId )
+                    maxId = (*iterator)->id;
+
+        resultId = maxId + 1;
+    }
+    else
+    {
+        // Проверка на существование предоставленного индекса
+        bool found = false;
+        for (std::vector < DialogNode * >::iterator iterator = _nodesHolder.begin();
+             iterator != _nodesHolder.end() && !found;
+             iterator++)
+            if ((*iterator)->dialogId == dialogId)
+                if ( id == (*iterator)->id )
+                    found = true;
+
+        if (found)
+        {
+            printf("[NPCEditorHolder::createNode] Error: Can't create node with id %d\n", id);
+            return nullptr;
+        }
+
+        resultId = id;
+    }
+
+    DialogNode *newNode = new DialogNode();
+    newNode->dialogId = dialogId;
+
+    _nodesHolder.push_back( newNode );
+
+    return newNode;
+}
+
 NPCEditorHolder::DialogNode *NPCEditorHolder::getNode(unsigned int dialogId, unsigned int nodeId)
 {
     for (std::vector < DialogNode * >::iterator iterator = _nodesHolder.begin();
@@ -541,3 +645,29 @@ void NPCEditorHolder::parseAnswers(NPCEditorHolder::DialogNode *dialog, tinyxml2
     }
 }
 
+
+
+std::string NPCEditorHolder::ExistCondition::typeToString(NPCEditorHolder::ExistCondition::Type type)
+{
+    switch (type)
+    {
+    case (Type_Complete):
+        return "complete";
+    case (Type_Have):
+        return "have";
+    default:
+        printf("[NPCEditorHolder::ExistCondition::typeToString] Error: Can't convert type to string.\n");
+        return "";
+    }
+}
+
+NPCEditorHolder::ExistCondition::Type NPCEditorHolder::ExistCondition::stringToType(const std::string &str)
+{
+    if (str == "complete")
+        return Type_Complete;
+    else if (str == "have")
+        return Type_Have;
+
+    printf("[NPCEditorHolder::ExistCondition::stringToType] Error: Can't convert string to type.\n");
+    return Type_None;
+}

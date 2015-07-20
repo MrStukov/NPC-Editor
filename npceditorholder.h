@@ -33,6 +33,31 @@ public:
     };
 
     /*
+     * Структура, описывающая условие присутствия ответа
+     */
+    struct ExistCondition
+    {
+        enum Type
+        {
+            Type_None,
+            Type_Complete,
+            Type_Have
+        };
+
+        ExistCondition()
+        {
+            type = Type_None;
+            conditionId = 0;
+        }
+
+        static std::string typeToString( Type type );
+        static Type stringToType( const std::string &str );
+
+        Type type;
+        unsigned int conditionId;
+    };
+
+    /*
      * Структура, описывающая ответ на вопрос
      */
     struct DialogAnswer
@@ -47,6 +72,8 @@ public:
         unsigned int destinationId;
         Type answerType;
         std::string text;
+
+        std::vector < ExistCondition > conditions;
     };
 
     /*
@@ -120,6 +147,15 @@ public:
 
     // Получение диалога по индексу
     DialogHolder* getDialog( unsigned int index ) const;
+
+    // Создание нового диалога и получение указателя на него
+    DialogHolder* createDialog( unsigned int id=0 );
+
+    // Удаление диалога по id
+    void removeDialog( unsigned int id=0 );
+
+    // Создание новой ноды
+    DialogNode *createNode( unsigned int dialogId, unsigned int id=0 );
 
     // Получение ноды по номеру диалога и номеру ноды
     DialogNode *getNode (unsigned int dialogId, unsigned int nodeId );

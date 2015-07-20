@@ -319,6 +319,16 @@
                            <string>ID</string>
                           </property>
                          </column>
+                         <column>
+                          <property name="text">
+                           <string>Text</string>
+                          </property>
+                         </column>
+                         <column>
+                          <property name="text">
+                           <string>Exist condition</string>
+                          </property>
+                         </column>
                         </widget>
                        </item>
                       </layout>

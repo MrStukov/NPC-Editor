@@ -28,10 +28,14 @@ private slots:
 
     void on_node_list_widget_activated(const QModelIndex &index);
 
-private:
+    void on_new_button_clicked();
 
+    void on_delete_button_clicked();
+
+private:
     // Загрузка
     void loadDialog( unsigned int index );
+    void loadDialog( NPCEditorHolder::DialogHolder *holder );
     void loadNode( unsigned int dialogIndex, unsigned int nodeIndex );
 
     // Сохранение

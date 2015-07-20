@@ -100,6 +100,61 @@ void DialogEditor::loadDialog(unsigned int index)
     _ui->start_node_combo->setCurrentIndex( startNodeIndex );
 }
 
+void DialogEditor::loadDialog(NPCEditorHolder::DialogHolder *dialog)
+{
+    if (index >= _npcEditor->dialogLength())
+    {
+        printf("[DialogEditor::loadDialog] Error: Can't get %d dialog. Out of size.\n",
+               index);
+        return;
+    }
+
+    saveCurrentDialog();
+
+    // Очистка диалоговых форм
+    _ui->start_node_combo->clear();
+    _ui->name_edit->clear();
+    _ui->id_edit->clear();
+    _ui->node_list_widget->clear();
+
+    // Очистка форм нод
+    _ui->node_id_edit->clear();
+    _ui->node_list_widget->clear();
+    _ui->node_text_edit->clear();
+
+    _currentOpenedNode = nullptr;
+
+    // Назначаем этот диалог как выбранный
+    _currentOpenedDialog = dialog;
+
+    _ui->name_edit->setText( QString(dialog->name.c_str()) );
+    _ui->id_edit->setText( QString::number( dialog->id ) );
+
+    // Загрузка данных о всех нодах и о начальной
+    NPCEditorHolder::DialogNode *startNode = _npcEditor->getNode( dialog->id, dialog->startId );
+
+    unsigned int startNodeIndex = 0;
+    for (unsigned int i=0; i < _npcEditor->rootLength( dialog->id ); i++)
+    {
+        NPCEditorHolder::DialogNode *node = _npcEditor->getNodeByIndex( dialog->id, i );
+
+        QString text(node->text.c_str());
+
+        text.truncate( 20 );
+
+        text = QString::number( node->id ) + tr(" ") + text;
+
+        _ui->node_list_widget->addItem( text );
+        _ui->start_node_combo->addItem( text );
+
+        if (node->id == startNode->id)
+            startNodeIndex = i;
+    }
+
+    // Назначаем стартовую ноду
+    _ui->start_node_combo->setCurrentIndex( startNodeIndex );
+}
+
 void DialogEditor::loadNode(unsigned int dialogIndex, unsigned int nodeIndex)
 {
     saveCurrentNode();
@@ -154,4 +209,18 @@ void DialogEditor::on_node_list_widget_activated(const QModelIndex &index)
 {
     if (_currentOpenedDialog)
         loadNode( _currentOpenedDialog->id, index.row());
+}
+
+void DialogEditor::on_new_button_clicked()
+{
+    NPCEditorHolder::DialogHolder *newDialog = _npcEditor->createDialog();
+
+    loadDialog( newDialog );
+
+    updateRootListWidget();
+}
+
+void DialogEditor::on_delete_button_clicked()
+{
+
 }
