@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QMessageBox>
-#include "npcfileeditorholder.h"
+#include "npceditorholder.h"
 #include "dialogeditor.h"
 
 namespace Ui {
@@ -59,7 +59,7 @@ private:
     Ui::MainWindow *_ui;
     DialogEditor *_dialogEditor;
 
-    NPCFileEditorHolder _npcEditor;
+    NPCEditorHolder _npcEditor;
     int _currentNPCIndex;
 };
 

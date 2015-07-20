@@ -1,19 +1,17 @@
-#ifndef NPCFILEEDITORHOLDER_H
-#define NPCFILEEDITORHOLDER_H
+#ifndef NPCEDITORHOLDER_H
+#define NPCEDITORHOLDER_H
 
 #include <string>
+#include <Libraries/Tinyxml2/tinyxml2.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include <iostream>
-#include <cstdlib>
-#include "Libraries/Tinyxml2/tinyxml2.h"
 
 /*
- * Класс, управляющий редактированием 
- * файла с NPC.
+ * Класс, управляющий редактированием
+ * файла с NPC
  */
-class NPCFileEditorHolder
+class NPCEditorHolder
 {
 public:
     /*
@@ -37,8 +35,6 @@ public:
     /*
      * Структура, описывающая ответ на вопрос
      */
-    struct DialogNode;
-
     struct DialogAnswer
     {
         enum Type
@@ -49,7 +45,6 @@ public:
         unsigned int id;
 
         unsigned int destinationId;
-        DialogNode *destination;
         Type answerType;
         std::string text;
     };
@@ -61,7 +56,8 @@ public:
     {
         DialogNode( )
         {
-
+            dialogId = 0;
+            id = 0;
         }
 
         unsigned int dialogId;
@@ -77,22 +73,21 @@ public:
     struct DialogHolder
     {
         DialogHolder ( unsigned int enterId=0,
-                       DialogNode *enterDialogRoot=nullptr)
+                       unsigned int enterStartId=0)
         {
             id = enterId;
-            root = enterDialogRoot;
+            startId = enterStartId;
         }
 
         unsigned int id;
+        unsigned int startId;
         std::string name;
-
-        DialogNode *root;
     };
-    
+
     // Конструктор и деструктор
-    NPCFileEditorHolder();
-    ~NPCFileEditorHolder();
-    
+    NPCEditorHolder();
+    ~NPCEditorHolder();
+
     // Метод открытия файла
     bool openFile( const std::string &file );
 
@@ -127,21 +122,25 @@ public:
     DialogHolder* getDialog( unsigned int index ) const;
 
     // Получение ноды по номеру диалога и номеру ноды
-    DialogNode *findNode( unsigned int rootId, unsigned int nodeId );
+    DialogNode *getNode (unsigned int dialogId, unsigned int nodeId );
 
     // Получение количества нод по номеру диалога
-    unsigned int rootLength( unsigned int rootId );
+    unsigned int rootLength ( unsigned int dialogId );
+
+    // Получение ноды по ее индексу
+    DialogNode *getNodeByIndex (unsigned int dialogId, unsigned int nodeIndex );
+
 private:
     // Приватные методы для открытия файла
     std::string openingFile( const std::string &path ) const;
-    std::string decodeFile( const std::string &fileData ) const;
-    bool parseData ( const std::string &data );
+    std::string decodeFile (const std::string &fileData ) const;
+    bool parseData (const std::string &data );
 
-    bool parseNPCNode ( tinyxml2::XMLElement *npcElement );
-    bool parseDialogRoot ( tinyxml2::XMLElement *dialogElement );
+    bool parseNPCNode( tinyxml2::XMLElement *npcElement );
+    bool parseDialogRoot ( tinyxml2::XMLElement *dialogElemenet );
 
-    std::string parseDialogNodeText( tinyxml2::XMLElement *dialogNode );
-    void parseAnswers( DialogNode *dialog, tinyxml2::XMLElement *dialogNode );
+    std::string parseDialogNodeText (tinyxml2::XMLElement *dialogNode );
+    void parseAnswers ( DialogNode *dialog, tinyxml2::XMLElement *dialogNode );
 
 
     std::string _currentOpenPath;
@@ -152,4 +151,4 @@ private:
     std::vector < DialogNode * > _nodesHolder;
 };
 
-#endif // NPCFILEEDITORHOLDER_H
+#endif // NPCEDITORHOLDER_H

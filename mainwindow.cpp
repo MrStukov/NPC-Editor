@@ -38,7 +38,7 @@ void MainWindow::on_actionOpen_triggered()
 
     updateListWidget();
     updateDialogs();
-    _dialogEditor->updateListWidget();
+    _dialogEditor->updateRootListWidget();
 }
 
 void MainWindow::on_actionSave_triggered()
@@ -74,7 +74,7 @@ void MainWindow::updateListWidget()
     _ui->listWidget->clear();
     for (unsigned int index = 0; index < _npcEditor.npcLength(); index++)
     {
-        NPCFileEditorHolder::NPCHolder *npc = _npcEditor.getNPC( index );
+        NPCEditorHolder::NPCHolder *npc = _npcEditor.getNPC( index );
         _ui->listWidget->addItem( QString::number( npc->id ) + tr(" ") + QString(npc->name.c_str()) );
     }
 }
@@ -101,7 +101,7 @@ void MainWindow::loadNPCWith(unsigned int index)
         updateData();
 
     _currentNPCIndex = index;
-    NPCFileEditorHolder::NPCHolder *npc = _npcEditor.getNPC(index);
+    NPCEditorHolder::NPCHolder *npc = _npcEditor.getNPC(index);
     _ui->name_line->setText( QString(npc->name.c_str()) );
     _ui->id_line->setText( QString::number( npc->id ) );
     _ui->dialog_combo->setCurrentIndex( npc->dialogId );
@@ -112,7 +112,7 @@ void MainWindow::updateData()
     if (_currentNPCIndex == -1)
         return;
 
-    NPCFileEditorHolder::NPCHolder *npc = _npcEditor.getNPC( _currentNPCIndex );
+    NPCEditorHolder::NPCHolder *npc = _npcEditor.getNPC( _currentNPCIndex );
     npc->name = _ui->name_line->text().toStdString();
 
     _ui->listWidget->item( _currentNPCIndex )->setText(
@@ -129,7 +129,7 @@ void MainWindow::clearForm()
 
 void MainWindow::on_addNpc_button_clicked()
 {
-    NPCFileEditorHolder::NPCHolder *npc = _npcEditor.createNPC();
+    NPCEditorHolder::NPCHolder *npc = _npcEditor.createNPC();
     updateListWidget();
 
     int index = _npcEditor.getNPCIndex( npc );
@@ -139,7 +139,7 @@ void MainWindow::on_addNpc_button_clicked()
 
 void MainWindow::on_listWidget_activated(const QModelIndex &index)
 {
-    loadNPCWith(index.row());
+    loadNPCWith( index.row() );
 }
 
 void MainWindow::on_delete_button_clicked()
@@ -147,7 +147,7 @@ void MainWindow::on_delete_button_clicked()
     if (_currentNPCIndex == -1)
         return;
 
-    NPCFileEditorHolder::NPCHolder *npc = _npcEditor.getNPC( _currentNPCIndex );
+    NPCEditorHolder::NPCHolder *npc = _npcEditor.getNPC( _currentNPCIndex );
     _npcEditor.removeNPC( npc->id );
 
     clearForm();
