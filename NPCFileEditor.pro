@@ -15,16 +15,17 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    npcfileeditorholder.cpp \
     Libraries/Tinyxml2/tinyxml2.cpp \
     dialogeditor.cpp \
-    npceditorholder.cpp
+    npceditorholder.cpp \
+    conditionwidget.cpp
 
 HEADERS  += mainwindow.h \
-    npcfileeditorholder.h \
     Libraries/Tinyxml2/tinyxml2.h \
     dialogeditor.h \
-    npceditorholder.h
+    npceditorholder.h \
+    conditionwidget.h
 
 FORMS    += mainwindow.ui \
-    dialogeditor.ui
+    dialogeditor.ui \
+    conditionwidget.ui

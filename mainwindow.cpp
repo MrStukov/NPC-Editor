@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _dialogEditor = new DialogEditor(this);
     _dialogEditor->setNpcEditor( &_npcEditor );
-    _dialogEditor->setModal(true);
+    connect(_dialogEditor, SIGNAL(dialogsUpdated()), this, SLOT(dialogsUpdateSlot()));
 
     _currentNPCIndex = -1;
 }
@@ -38,6 +38,7 @@ void MainWindow::on_actionOpen_triggered()
 
     updateListWidget();
     updateDialogs();
+    _dialogEditor->clear();
     _dialogEditor->updateRootListWidget();
 }
 
@@ -115,6 +116,11 @@ void MainWindow::updateData()
     NPCEditorHolder::NPCHolder *npc = _npcEditor.getNPC( _currentNPCIndex );
     npc->name = _ui->name_line->text().toStdString();
 
+    if (_ui->dialog_combo->currentIndex() > -1)
+        npc->dialogId = _ui->dialog_combo->currentIndex();
+    else
+        npc->dialogId = 0;
+
     _ui->listWidget->item( _currentNPCIndex )->setText(
         QString::number( npc->id ) + tr(" ") + QString(npc->name.c_str())
     );
@@ -157,4 +163,9 @@ void MainWindow::on_delete_button_clicked()
 void MainWindow::on_actionDialog_manager_triggered()
 {
     _dialogEditor->show();
+}
+
+void MainWindow::dialogsUpdateSlot()
+{
+    updateDialogs();
 }

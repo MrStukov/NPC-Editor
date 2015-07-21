@@ -40,6 +40,7 @@ private slots:
 
     void on_actionDialog_manager_triggered();
 
+    void dialogsUpdateSlot();
 private:
     // Метод обновления listWidet
     void updateListWidget();

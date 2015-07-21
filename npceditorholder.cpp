@@ -256,11 +256,28 @@ bool NPCEditorHolder::save(const std::string &path)
                         break;
                     case DialogAnswer::Type_Shop:
                         printer.PushAttribute("type", "shop");
+                        printer.PushAttribute("goto", std::to_string(answerIterator->destinationId).c_str());
                         // TODO: Добавить поддержку магазинов
                         break;
                     }
 
                     printer.PushText(answerIterator->text.c_str());
+
+                    printer.OpenElement("conditions");
+
+                    for (std::vector < ExistCondition >::const_iterator conditionIterator = answerIterator->conditions.begin();
+                         conditionIterator != answerIterator->conditions.end();
+                         conditionIterator++)
+                    {
+                        printer.OpenElement("condition");
+
+                        printer.PushAttribute("type", ExistCondition::typeToString( conditionIterator->type ).c_str() );
+                        printer.PushAttribute("argument", conditionIterator->conditionId );
+
+                        printer.CloseElement(false);
+                    }
+
+                    printer.CloseElement(false);
 
                     printer.CloseElement(false);
                 }
@@ -318,7 +335,7 @@ NPCEditorHolder::DialogHolder *NPCEditorHolder::createDialog(unsigned int id)
         // Поиск максимального id
         unsigned int maxId = 0;
         for (std::vector < DialogHolder *>::iterator iterator = _dialogues.begin();
-             iterator != _npcs.end();
+             iterator != _dialogues.end();
              iterator++)
             if ( (*iterator)->id > maxId )
                 maxId = (*iterator)->id;
@@ -330,7 +347,7 @@ NPCEditorHolder::DialogHolder *NPCEditorHolder::createDialog(unsigned int id)
         // Проверка на существование предоставленного индекса
         bool found = false;
         for (std::vector < DialogHolder * >::iterator iterator = _dialogues.begin();
-             iterator != _npcs.end() && !found;
+             iterator != _dialogues.end() && !found;
              iterator++)
             if ( id == (*iterator)->id )
                 found = true;
@@ -346,9 +363,24 @@ NPCEditorHolder::DialogHolder *NPCEditorHolder::createDialog(unsigned int id)
 
     DialogHolder *newDialog = new DialogHolder( resultId );
 
+    newDialog->name = "undefined";
+
     _dialogues.push_back( newDialog );
 
     return newDialog;
+}
+
+int NPCEditorHolder::getDialogIndex(NPCEditorHolder::DialogHolder *dialog) const
+{
+    unsigned int index = 0;
+    for (std::vector < DialogHolder * >::const_iterator iterator = _dialogues.begin();
+         iterator != _dialogues.end();
+         iterator++, index++)
+        if ((*iterator) == dialog)
+            return index;
+
+    printf("[NPCEditorHolder::getDialogIndex] Error: Can't get index of npc.\n");
+    return -1;
 }
 
 void NPCEditorHolder::removeDialog(unsigned int id)
@@ -405,7 +437,9 @@ NPCEditorHolder::DialogNode *NPCEditorHolder::createNode( unsigned int dialogId,
     }
 
     DialogNode *newNode = new DialogNode();
+
     newNode->dialogId = dialogId;
+    newNode->id = resultId;
 
     _nodesHolder.push_back( newNode );
 
@@ -460,6 +494,71 @@ NPCEditorHolder::DialogNode *NPCEditorHolder::getNodeByIndex(unsigned int dialog
            nodeIndex);
 
     return nullptr;
+}
+
+int NPCEditorHolder::getNodeIndex(NPCEditorHolder::DialogNode *node) const
+{
+    unsigned int index = 0;
+    for (std::vector < DialogNode * >::const_iterator iterator = _nodesHolder.begin();
+         iterator != _nodesHolder.end();
+         iterator++)
+    {
+        if (node->dialogId == (*iterator)->dialogId)
+        {
+            if ((*iterator) == node)
+                return index;
+            else
+                index++;
+        }
+    }
+
+    printf("[NPCEditorHolder::getNodeIndex] Error: Can't get index of node.\n");
+    return -1;
+}
+
+void NPCEditorHolder::removeNode(unsigned int dialogId, unsigned int nodeId)
+{
+    DialogNode *node= nullptr;
+    for (std::vector < DialogNode * >::iterator iterator = _nodesHolder.begin();
+         iterator != _nodesHolder.end();
+         iterator++)
+        if ( nodeId == (*iterator)->id && dialogId == (*iterator)->dialogId )
+        {
+            delete (*iterator);
+            node = (*iterator);
+        }
+
+    _nodesHolder.erase( std::remove( _nodesHolder.begin(), _nodesHolder.end(), node ) );
+}
+
+void NPCEditorHolder::addAnswer(NPCEditorHolder::DialogNode *node) const
+{
+    DialogAnswer answer;
+    answer.answerType = DialogAnswer::Type_Blank;
+    answer.id = 0;
+
+    for (std::vector < DialogAnswer >::const_iterator iterator = node->answers.begin();
+         iterator != node->answers.end();
+         iterator++)
+        if (answer.id < iterator->id)
+            answer.id = iterator->id;
+
+    answer.id++;
+    answer.destinationId = 0;
+
+    node->answers.push_back(answer);
+}
+
+void NPCEditorHolder::removeAnswer(NPCEditorHolder::DialogNode *node, unsigned int index)
+{
+    if (index >= node->answers.size())
+    {
+        printf("[NPCEditorHolder::removeAnswer] Error: Can't remove answer for index: %d\n",
+               index);
+        return;
+    }
+
+    node->answers.erase( node->answers.begin() + index );
 }
 
 std::string NPCEditorHolder::openingFile(const std::string &path) const
@@ -589,14 +688,6 @@ bool NPCEditorHolder::parseDialogRoot(tinyxml2::XMLElement *dialogElement)
     }
 
     // Доработка "ответов", так как все ноды получены
-//    for (std::vector < DialogNode * >::iterator iterator = _nodesHolder.begin();
-//         iterator != _nodesHolder.end();
-//         iterator++)
-//        if ((*iterator)->dialogId == dialog->id)
-//            for (std::vector < DialogAnswer >::iterator answerIterator = (*iterator)->answers.begin();
-//                 answerIterator != (*iterator)->answers.end();
-//                 answerIterator++)
-//                (*answerIterator).destination = findNode((*iterator)->dialogId, (*answerIterator).destinationId);
 
     _dialogues.push_back( dialog );
 
@@ -639,13 +730,31 @@ void NPCEditorHolder::parseAnswers(NPCEditorHolder::DialogNode *dialog, tinyxml2
             answer.answerType = DialogAnswer::Type_Shop;
         }
 
-        dialog->answers.push_back(answer);
+        tinyxml2::XMLElement *conditionsElement = answerElement->FirstChildElement( "conditions" );
+        if ( conditionsElement )
+            parseConditions( &answer, conditionsElement );
 
-        answerElement = answerElement->NextSiblingElement("answer");
+        dialog->answers.push_back( answer );
+
+        answerElement = answerElement->NextSiblingElement( "answer" );
     }
 }
 
+void NPCEditorHolder::parseConditions(NPCEditorHolder::DialogAnswer *answer, tinyxml2::XMLElement *conditionNode)
+{
+    tinyxml2::XMLElement *condition = conditionNode->FirstChildElement( "condition" );
+    while (condition)
+    {
+        ExistCondition conditionObject;
 
+        conditionObject.type = ExistCondition::stringToType( condition->Attribute("type") );
+        conditionObject.conditionId = atoi(condition->Attribute( "argument" ));
+
+        answer->conditions.push_back( conditionObject );
+
+        condition = condition->NextSiblingElement( "condition" );
+    }
+}
 
 std::string NPCEditorHolder::ExistCondition::typeToString(NPCEditorHolder::ExistCondition::Type type)
 {

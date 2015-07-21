@@ -11,6 +11,8 @@
  * Класс, управляющий редактированием
  * файла с NPC
  */
+
+// TODO: Убрать из реализации перевод из типа в строку и наоборот в отдельную статическую ф-цию.
 class NPCEditorHolder
 {
 public:
@@ -151,6 +153,9 @@ public:
     // Создание нового диалога и получение указателя на него
     DialogHolder* createDialog( unsigned int id=0 );
 
+    // Получение индекса диалога
+    int getDialogIndex ( DialogHolder *dialog ) const;
+
     // Удаление диалога по id
     void removeDialog( unsigned int id=0 );
 
@@ -166,6 +171,17 @@ public:
     // Получение ноды по ее индексу
     DialogNode *getNodeByIndex (unsigned int dialogId, unsigned int nodeIndex );
 
+    // Получение индекса ноды
+    int getNodeIndex( DialogNode *node ) const;
+
+    // Удаление ноды
+    void removeNode( unsigned int dialogId, unsigned int nodeId );
+
+    // Добавление ответа
+    void addAnswer ( DialogNode *node ) const;
+
+    // Удаление ответа
+    void removeAnswer ( DialogNode *node, unsigned int index );
 private:
     // Приватные методы для открытия файла
     std::string openingFile( const std::string &path ) const;
@@ -177,7 +193,7 @@ private:
 
     std::string parseDialogNodeText (tinyxml2::XMLElement *dialogNode );
     void parseAnswers ( DialogNode *dialog, tinyxml2::XMLElement *dialogNode );
-
+    void parseConditions ( DialogAnswer *dialog, tinyxml2::XMLElement *conditionNode );
 
     std::string _currentOpenPath;
     bool _isOpen;

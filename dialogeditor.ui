@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1007</width>
-    <height>654</height>
+    <width>1302</width>
+    <height>881</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -275,6 +275,12 @@
                        </item>
                        <item>
                         <widget class="QLineEdit" name="node_id_edit">
+                         <property name="maximumSize">
+                          <size>
+                           <width>100</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
                          <property name="readOnly">
                           <bool>true</bool>
                          </property>
@@ -296,6 +302,12 @@
                        </item>
                        <item>
                         <widget class="QPlainTextEdit" name="node_text_edit">
+                         <property name="maximumSize">
+                          <size>
+                           <width>500</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
                          <property name="placeholderText">
                           <string>Phrase text</string>
                          </property>
@@ -313,7 +325,19 @@
                         </widget>
                        </item>
                        <item>
-                        <widget class="QTreeWidget" name="nod_answer_tree_widget">
+                        <widget class="QTableWidget" name="node_table_widget">
+                         <property name="showGrid">
+                          <bool>true</bool>
+                         </property>
+                         <attribute name="horizontalHeaderCascadingSectionResizes">
+                          <bool>false</bool>
+                         </attribute>
+                         <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+                          <bool>false</bool>
+                         </attribute>
+                         <attribute name="verticalHeaderStretchLastSection">
+                          <bool>false</bool>
+                         </attribute>
                          <column>
                           <property name="text">
                            <string>ID</string>
@@ -326,10 +350,51 @@
                          </column>
                          <column>
                           <property name="text">
-                           <string>Exist condition</string>
+                           <string>Type</string>
+                          </property>
+                         </column>
+                         <column>
+                          <property name="text">
+                           <string>Goto</string>
+                          </property>
+                         </column>
+                         <column>
+                          <property name="text">
+                           <string>Exist conditions</string>
                           </property>
                          </column>
                         </widget>
+                       </item>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_10">
+                         <item>
+                          <widget class="QPushButton" name="answer_add_button">
+                           <property name="text">
+                            <string>Add answer</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="answer_delete_button">
+                           <property name="text">
+                            <string>Delete answer</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <spacer name="horizontalSpacer_4">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
                        </item>
                       </layout>
                      </item>
