@@ -702,7 +702,8 @@ std::string NPCEditorHolder::parseDialogNodeText(tinyxml2::XMLElement *dialogNod
     if (!textElement)
         return result;
 
-    result = std::string(textElement->GetText());
+    if (textElement->GetText())
+        result = std::string(textElement->GetText());
 
     return trim(result);
 }
